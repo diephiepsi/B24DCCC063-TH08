@@ -1,3 +1,4 @@
+// SoVanBangForm.tsx
 import { useState } from 'react';
 import { Table, Button, Modal, Form, Input, message, Popconfirm } from 'antd';
 import { SoVanBang } from './utils';
@@ -10,21 +11,12 @@ type Props = {
 const SoVanBangForm = ({ soVanBang, setSoVanBang }: Props) => {
 	const [open, setOpen] = useState(false);
 	const [editing, setEditing] = useState<SoVanBang | null>(null);
-	const [form] = Form.useForm();
+	const [form] = Form.useForm<{ year: number }>();
 
 	const columns = [
-		{
-			title: 'ID',
-			dataIndex: 'id',
-		},
-		{
-			title: 'Năm',
-			dataIndex: 'year',
-		},
-		{
-			title: 'Số hiện tại',
-			dataIndex: 'currentNumber',
-		},
+		{ title: 'ID', dataIndex: 'id' },
+		{ title: 'Năm', dataIndex: 'year' },
+		{ title: 'Số hiện tại', dataIndex: 'currentNumber' },
 		{
 			title: 'Thao tác',
 			render: (_: any, record: SoVanBang) => (
@@ -32,7 +24,6 @@ const SoVanBangForm = ({ soVanBang, setSoVanBang }: Props) => {
 					<Button type='link' onClick={() => handleEdit(record)}>
 						Xem
 					</Button>
-
 					<Popconfirm title='Xóa sổ này?' onConfirm={() => handleDelete(record.id)}>
 						<Button type='link' danger>
 							Xóa
@@ -64,9 +55,7 @@ const SoVanBangForm = ({ soVanBang, setSoVanBang }: Props) => {
 		try {
 			const values = await form.validateFields();
 			const year = Number(values.year);
-
 			const existed = soVanBang.find((item) => item.year === year);
-
 			if (existed) {
 				message.error('Năm đã tồn tại');
 				return;
@@ -75,12 +64,11 @@ const SoVanBangForm = ({ soVanBang, setSoVanBang }: Props) => {
 			const newItem: SoVanBang = {
 				id: Date.now(),
 				year,
-				currentNumber: 1,
+				currentNumber: 0,
 			};
 
 			setSoVanBang([...soVanBang, newItem]);
-			message.success('Thêm thành công');
-
+			message.success('Thêm sổ thành công');
 			setOpen(false);
 			form.resetFields();
 		} catch {
@@ -91,15 +79,19 @@ const SoVanBangForm = ({ soVanBang, setSoVanBang }: Props) => {
 	return (
 		<div style={{ padding: 16, background: '#fff' }}>
 			<h3>Quản lý sổ văn bằng</h3>
-
 			<Button type='primary' onClick={handleAdd} style={{ marginBottom: 12 }}>
 				Thêm
 			</Button>
-
 			<Table rowKey='id' columns={columns} dataSource={[...soVanBang].sort((a, b) => b.year - a.year)} />
-
-			<Modal visible={open} title={editing ? 'Chi tiết' : 'Thêm'} onOk={handleSubmit} onCancel={() => setOpen(false)}>
-				<Form form={form}>
+			<Modal
+				title={editing ? 'Chi tiết' : 'Thêm'}
+				visible={open}
+				onOk={handleSubmit}
+				onCancel={() => setOpen(false)}
+				okText='Lưu'
+				cancelText='Hủy'
+			>
+				<Form form={form} layout='vertical'>
 					<Form.Item name='year' label='Năm' rules={[{ required: true, message: 'Nhập năm' }]}>
 						<Input type='number' disabled={!!editing} />
 					</Form.Item>

@@ -16,6 +16,7 @@ export interface QuyetDinh {
 	ngayBanHanh: string;
 	trichYeu: string;
 	soVanBangId: number;
+	soHienTai: number;
 }
 
 export interface VanBang {

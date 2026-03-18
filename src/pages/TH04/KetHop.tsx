@@ -11,7 +11,12 @@ const QuanLy = () => {
 		<div style={{ padding: 24 }}>
 			<SoVanBangForm soVanBang={soVanBang} setSoVanBang={setSoVanBang} />
 
-			<QuyetDinhForm quyetDinh={quyetDinh} setQuyetDinh={setQuyetDinh} soVanBang={soVanBang} />
+			<QuyetDinhForm
+				quyetDinh={quyetDinh}
+				setQuyetDinh={setQuyetDinh}
+				soVanBang={soVanBang}
+				setSoVanBang={setSoVanBang}
+			/>
 		</div>
 	);
 };

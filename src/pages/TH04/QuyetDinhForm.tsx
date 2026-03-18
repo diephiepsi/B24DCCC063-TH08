@@ -6,31 +6,23 @@ type Props = {
 	quyetDinh: QuyetDinh[];
 	setQuyetDinh: React.Dispatch<React.SetStateAction<QuyetDinh[]>>;
 	soVanBang: SoVanBang[];
+	setSoVanBang: React.Dispatch<React.SetStateAction<SoVanBang[]>>;
 };
 
-const QuyetDinhForm = ({ quyetDinh, setQuyetDinh, soVanBang }: Props) => {
+const QuyetDinhForm = ({ quyetDinh, setQuyetDinh, soVanBang, setSoVanBang }: Props) => {
 	const [open, setOpen] = useState(false);
 	const [editing, setEditing] = useState<QuyetDinh | null>(null);
 	const [form] = Form.useForm();
 
 	const columns = [
-		{
-			title: 'ID',
-			dataIndex: 'id',
-		},
-		{
-			title: 'Số quyết định',
-			dataIndex: 'soQD',
-		},
+		{ title: 'ID', dataIndex: 'id' },
+		{ title: 'Số quyết định', dataIndex: 'soQD' },
 		{
 			title: 'Ngày ban hành',
 			dataIndex: 'ngayBanHanh',
 			render: (text: string) => new Date(text).toLocaleDateString('vi-VN'),
 		},
-		{
-			title: 'Trích yếu',
-			dataIndex: 'trichYeu',
-		},
+		{ title: 'Trích yếu', dataIndex: 'trichYeu' },
 		{
 			title: 'Sổ văn bằng',
 			dataIndex: 'soVanBangId',
@@ -46,7 +38,6 @@ const QuyetDinhForm = ({ quyetDinh, setQuyetDinh, soVanBang }: Props) => {
 					<Button type='link' onClick={() => handleEdit(record)}>
 						Sửa
 					</Button>
-
 					<Popconfirm title='Xóa?' onConfirm={() => handleDelete(record.id)}>
 						<Button type='link' danger>
 							Xóa
@@ -62,7 +53,6 @@ const QuyetDinhForm = ({ quyetDinh, setQuyetDinh, soVanBang }: Props) => {
 			message.warning('Tạo sổ trước');
 			return;
 		}
-
 		setEditing(null);
 		form.resetFields();
 		setOpen(true);
@@ -82,17 +72,23 @@ const QuyetDinhForm = ({ quyetDinh, setQuyetDinh, soVanBang }: Props) => {
 	const handleSubmit = async () => {
 		try {
 			const values = await form.validateFields();
-
 			const existed = quyetDinh.find((item) => item.soQD === values.soQD && item.id !== editing?.id);
-
 			if (existed) {
 				message.error('Trùng số quyết định');
 				return;
 			}
 
+			const soIndex = soVanBang.findIndex((s) => s.id === values.soVanBangId);
+			if (soIndex === -1) {
+				message.error('Sổ không tồn tại');
+				return;
+			}
+
+			const so = soVanBang[soIndex];
+
 			if (editing) {
 				setQuyetDinh(quyetDinh.map((item) => (item.id === editing.id ? { ...item, ...values } : item)));
-				message.success('Cập nhật');
+				message.success('Cập nhật quyết định');
 			} else {
 				const newItem: QuyetDinh = {
 					id: Date.now(),
@@ -100,10 +96,12 @@ const QuyetDinhForm = ({ quyetDinh, setQuyetDinh, soVanBang }: Props) => {
 					ngayBanHanh: values.ngayBanHanh,
 					trichYeu: values.trichYeu,
 					soVanBangId: values.soVanBangId,
+					soHienTai: so.currentNumber,
 				};
-
+				soVanBang[soIndex] = { ...so, currentNumber: so.currentNumber + 1 };
+				setSoVanBang([...soVanBang]);
 				setQuyetDinh([...quyetDinh, newItem]);
-				message.success('Thêm');
+				message.success('Thêm quyết định thành công');
 			}
 
 			setOpen(false);
@@ -116,27 +114,21 @@ const QuyetDinhForm = ({ quyetDinh, setQuyetDinh, soVanBang }: Props) => {
 	return (
 		<div style={{ marginTop: 24, padding: 16, background: '#fff' }}>
 			<h3>Quản lý quyết định</h3>
-
 			<Button type='primary' onClick={handleAdd} style={{ marginBottom: 12 }}>
 				Thêm
 			</Button>
-
 			<Table rowKey='id' columns={columns} dataSource={quyetDinh} />
-
 			<Modal visible={open} title={editing ? 'Sửa' : 'Thêm'} onOk={handleSubmit} onCancel={() => setOpen(false)}>
 				<Form form={form} layout='vertical'>
 					<Form.Item name='soQD' label='Số quyết định' rules={[{ required: true, message: 'Nhập' }]}>
 						<Input />
 					</Form.Item>
-
 					<Form.Item name='ngayBanHanh' label='Ngày' rules={[{ required: true, message: 'Chọn' }]}>
 						<Input type='date' />
 					</Form.Item>
-
 					<Form.Item name='trichYeu' label='Trích yếu' rules={[{ required: true, message: 'Nhập' }]}>
 						<Input />
 					</Form.Item>
-
 					<Form.Item name='soVanBangId' label='Sổ' rules={[{ required: true, message: 'Chọn' }]}>
 						<Select>
 							{soVanBang.map((so) => (
