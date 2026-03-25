@@ -1,41 +1,38 @@
 import React, { useMemo } from 'react';
-import { PageContainer } from '@ant-design/pro-components';
+import { PageContainer } from '@ant-design/pro-layout';
 import { Card, Row, Col, Statistic, Button } from 'antd';
-import { useModel } from 'umi';
 import ColumnChart from '@/components/Chart/ColumnChart';
 import * as XLSX from 'xlsx';
 
-const Reports: React.FC = () => {
-	const { clubs, registrations } = useModel('clubModel');
-
+const Reports: React.FC<any> = ({ clubs = [], apps = [] }) => {
 	const stats = useMemo(() => {
-		const pending = registrations.filter((r) => r.status === 'Pending').length;
-		const approved = registrations.filter((r) => r.status === 'Approved').length;
-		const rejected = registrations.filter((r) => r.status === 'Rejected').length;
+		const pending = apps.filter((r: any) => r.status === 'Pending').length;
+		const approved = apps.filter((r: any) => r.status === 'Approved').length;
+		const rejected = apps.filter((r: any) => r.status === 'Rejected').length;
 
 		const chartData = {
-			xAxis: clubs.map((c) => c.name),
+			xAxis: clubs.map((c: any) => c.name),
 			yAxis: [
-				clubs.map((c) => registrations.filter((r) => r.clubId === c.id && r.status === 'Pending').length),
-				clubs.map((c) => registrations.filter((r) => r.clubId === c.id && r.status === 'Approved').length),
-				clubs.map((c) => registrations.filter((r) => r.clubId === c.id && r.status === 'Rejected').length),
+				clubs.map((c: any) => apps.filter((r: any) => r.clubId === c.id && r.status === 'Pending').length),
+				clubs.map((c: any) => apps.filter((r: any) => r.clubId === c.id && r.status === 'Approved').length),
+				clubs.map((c: any) => apps.filter((r: any) => r.clubId === c.id && r.status === 'Rejected').length),
 			],
 			yLabel: ['Chờ duyệt (Pending)', 'Đã duyệt (Approved)', 'Từ chối (Rejected)'],
 		};
 
 		return { totalClubs: clubs.length, pending, approved, rejected, chartData };
-	}, [clubs, registrations]);
+	}, [clubs, apps]);
 
 	const exportToExcel = () => {
-		const approvedMembers = registrations.filter((r) => r.status === 'Approved');
-		const data = approvedMembers.map((m) => ({
+		const approvedMembers = apps.filter((r: any) => r.status === 'Approved');
+		const data = approvedMembers.map((m: any) => ({
 			'Họ tên': m.fullName,
 			Email: m.email,
 			SĐT: m.phone,
 			'Giới tính': m.gender,
 			'Địa chỉ': m.address,
-			'Sở trường': m.talents,
-			'Câu lạc bộ': clubs.find((c) => c.id === m.clubId)?.name || '',
+			'Sở trường': m.strength || m.talents,
+			'Câu lạc bộ': clubs.find((c: any) => c.id === m.clubId)?.name || '',
 		}));
 
 		const ws = XLSX.utils.json_to_sheet(data);
