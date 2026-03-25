@@ -1,59 +1,97 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, Row, Col, message, Descriptions, Divider } from 'antd';
+import { useState } from 'react';
+import { Card, Form, Input, Button, Row, Col, message, Descriptions, Divider, Empty, Space, Tag } from 'antd';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 
-const TraCuuVanBang = ({ diplomas, decisions, setDecisions }: any) => {
+const TraCuuVanBang = (props: any) => {
+  const { diplomas, decisions, setDecisions } = props;
+  const [form] = Form.useForm();
   const [result, setResult] = useState<any>(null);
 
-  const onSearch = (values: any) => {
-    // Đếm số tham số được nhập
-    const filledParams = Object.values(values).filter(v => !!v).length;
+  const handleSearch = (values: any) => {
+    const cleanValues: any = {};
+    Object.keys(values).forEach((key) => {
+      const val = values[key];
+      if (typeof val === 'string') {
+        cleanValues[key] = val.trim(); 
+      } else {
+        cleanValues[key] = val;
+      }
+    });
+
+    const filledParams = Object.values(cleanValues).filter((v) => v !== undefined && v !== '').length;
+
     if (filledParams < 2) {
-      return message.warning('Vui lòng nhập ít nhất 2 tham số tra cứu!');
+      message.warning('Yêu cầu nhập ít nhất 2 tham số để tra cứu!');
+      return;
     }
 
-    const found = diplomas.find((v: any) => 
-      (values.soHieuVB && v.soHieuVB === values.soHieuVB) ||
-      (values.maSV && v.maSV === values.maSV) ||
-      (values.hoTen && v.hoTen.includes(values.hoTen))
-    );
+    const found = diplomas.find((item: any) => {
+      return (
+        (cleanValues.soHieuVB && item.soHieuVB === cleanValues.soHieuVB) ||
+        (cleanValues.soVaoSo && item.soVaoSo.toString() === cleanValues.soVaoSo) ||
+        (cleanValues.maSV && item.maSV === cleanValues.maSV) ||
+        (cleanValues.hoTen && item.hoTen.toLowerCase().includes(cleanValues.hoTen.toLowerCase())) ||
+        (cleanValues.ngaySinh && item.ngaySinh === cleanValues.ngaySinh)
+      );
+    });
 
     if (found) {
       setResult(found);
-      // Ghi nhận lượt tra cứu cho quyết định đó
-      setDecisions(decisions.map((d: any) => d.id === found.quyetDinhId ? { ...d, luotTraCuu: d.luotTraCuu + 1 } : d));
       message.success('Tìm thấy thông tin văn bằng!');
+
+      const newDecisions = decisions.map((qd: any) => {
+        if (qd.id === found.quyetDinhId) {
+          return { ...qd, luotTraCuu: (qd.luotTraCuu || 0) + 1 };
+        }
+        return qd;
+      });
+      setDecisions(newDecisions);
     } else {
       setResult(null);
-      message.error('Không tìm thấy văn bằng phù hợp');
+      message.error('Không tìm thấy văn bằng phù hợp với thông tin đã nhập.');
     }
   };
 
   return (
-    <Card title="Tra cứu văn bằng hệ thống">
-      <Form layout="vertical" onFinish={onSearch}>
-        <Row gutter={16}>
-          <Col span={8}><Form.Item name="soHieuVB" label="Số hiệu VB"><Input /></Form.Item></Col>
-          <Col span={8}><Form.Item name="maSV" label="Mã sinh viên"><Input /></Form.Item></Col>
-          <Col span={8}><Form.Item name="hoTen" label="Họ tên"><Input /></Form.Item></Col>
+    <Card title={<span><SearchOutlined /> Tra cứu thông tin văn bằng</span>}>
+      <Form form={form} layout="vertical" onFinish={handleSearch}>
+        <Row gutter={[16, 0]}>
+          <Col span={8}><Form.Item name="soHieuVB" label="Số hiệu văn bằng"><Input placeholder="VD: VB123..." allowClear /></Form.Item></Col>
+          <Col span={8}><Form.Item name="soVaoSo" label="Số vào sổ"><Input placeholder="Nhập số vào sổ..." allowClear /></Form.Item></Col>
+          <Col span={8}><Form.Item name="maSV" label="Mã sinh viên (MSV)"><Input placeholder="VD: B24DCCC..." allowClear /></Form.Item></Col>
+          <Col span={8}><Form.Item name="hoTen" label="Họ và tên"><Input placeholder="Nhập tên sinh viên..." allowClear /></Form.Item></Col>
+          <Col span={8}><Form.Item name="ngaySinh" label="Ngày sinh"><Input placeholder="YYYY-MM-DD" allowClear /></Form.Item></Col>
         </Row>
-        <Button type="primary" htmlType="submit">Tra cứu ngay</Button>
+        <Space>
+          <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>Tìm kiếm</Button>
+          <Button icon={<ReloadOutlined />} onClick={() => { form.resetFields(); setResult(null); }}>Làm mới</Button>
+        </Space>
       </Form>
 
-      {result && (
-        <div style={{ marginTop: 30 }}>
-          <Divider>KẾT QUẢ TRA CỨU</Divider>
-          <Descriptions bordered column={2}>
-            <Descriptions.Item label="Họ tên">{result.hoTen}</Descriptions.Item>
-            <Descriptions.Item label="Mã SV">{result.maSV}</Descriptions.Item>
-            <Descriptions.Item label="Số hiệu">{result.soHieuVB}</Descriptions.Item>
+      <Divider />
+
+      {result ? (
+        <div className="animate__animated animate__fadeIn">
+          <Descriptions title="Chi tiết văn bằng" bordered column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
+            <Descriptions.Item label="Họ và tên" labelStyle={{ fontWeight: 'bold' }}>{result.hoTen}</Descriptions.Item>
+            <Descriptions.Item label="Mã sinh viên">{result.maSV}</Descriptions.Item>
+            <Descriptions.Item label="Ngày sinh">{result.ngaySinh}</Descriptions.Item>
+            <Descriptions.Item label="Số hiệu văn bằng"><Tag color="blue">{result.soHieuVB}</Tag></Descriptions.Item>
             <Descriptions.Item label="Số vào sổ">{result.soVaoSo}</Descriptions.Item>
-            {Object.keys(result.duLieuDong).map(key => (
+            <Descriptions.Item label="Quyết định tốt nghiệp">
+              {decisions.find((d: any) => d.id === result.quyetDinhId)?.soQD || 'N/A'}
+            </Descriptions.Item>
+            {}
+            {Object.keys(result.duLieuDong || {}).map((key) => (
               <Descriptions.Item key={key} label={key}>{result.duLieuDong[key]}</Descriptions.Item>
             ))}
           </Descriptions>
         </div>
+      ) : (
+        <Empty description="Nhập ít nhất 2 tham số để bắt đầu tra cứu" />
       )}
     </Card>
   );
 };
+
 export default TraCuuVanBang;

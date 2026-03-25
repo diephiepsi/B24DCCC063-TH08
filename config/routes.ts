@@ -119,6 +119,4 @@
     // Bạn có thể thêm các route con khác ở đây nếu muốn tách trang riêng
   ],
 },
-
-
 ];

@@ -5,9 +5,11 @@ import CauHinhBieuMau from './CauHinhBieuMau';
 import ThongTinVanBang from './ThongTinVanBang';
 import TraCuuVanBang from './TraCuuVanBang';
 import { QuyetDinh, SoVanBang } from './utils';
+import { useState } from 'react';
 import QuanLy from './KetHop';
 
 const Bai4Main = () => {
+	// Gọi đúng tên model "localStorage" (tương ứng với tên file localStorage.ts)
 	const storageModel = useModel('TH04.localStorage');
 
 	return (

@@ -5,28 +5,40 @@ import { PlusOutlined } from '@ant-design/icons';
 import { ModalForm, ProFormText, ProFormDatePicker, ProFormSelect, ProFormDigit } from '@ant-design/pro-form';
 import moment from 'moment';
 
-const ThongTinVanBang = ({ diplomas, setDiplomas, fields, decisions, ledgers, setLedgers }: any) => {
+const ThongTinVanBang = ({
+	diplomas,
+	setDiplomas,
+	fields,
+	decisions,
+	ledgers,
+	setLedgers,
+	quyetDinh,
+	soVanBang,
+	setSoVanBang,
+}: any) => {
 	const [visible, setVisible] = useState(false);
 
+	const activeDecisions = decisions || quyetDinh || [];
+	const activeLedgers = ledgers || soVanBang || [];
+
 	const handleAdd = async (values: any) => {
-		const qd = decisions?.find((d: any) => d.id === values.quyetDinhId);
+		const qd = activeDecisions.find((d: any) => d.id === values.quyetDinhId);
 		if (!qd) {
 			message.error('Không tìm thấy quyết định!');
 			return false;
 		}
-		const ledger = ledgers?.find((l: any) => l.id === qd.soVanBangId);
+		const ledger = activeLedgers.find((l: any) => l.id === qd.soVanBangId);
 		if (!ledger) {
 			message.error('Quyết định chưa được gán vào sổ văn bằng nào!');
 			return false;
 		}
 
-		// Logic: Tự động tăng số vào sổ
 		const newSoVaoSo = (ledger.soHienTai || 0) + 1;
 
-		// Cập nhật sổ văn bằng
-		setLedgers(ledgers?.map((l: any) => (l.id === ledger.id ? { ...l, soHienTai: newSoVaoSo } : l)));
+		const updatedLedgers = activeLedgers.map((l: any) => (l.id === ledger.id ? { ...l, soHienTai: newSoVaoSo } : l));
+		if (setLedgers) setLedgers(updatedLedgers);
+		if (setSoVanBang) setSoVanBang(updatedLedgers);
 
-		// Tách dữ liệu mặc định và dữ liệu động
 		const { soHieuVB, maSV, hoTen, ngaySinh, quyetDinhId, ...dynamicData } = values;
 
 		const formattedDynamicData: any = {};
@@ -64,7 +76,7 @@ const ThongTinVanBang = ({ diplomas, setDiplomas, fields, decisions, ledgers, se
 			title: 'Quyết định',
 			dataIndex: 'quyetDinhId',
 			render: (_: any, record: any) => {
-				const qd = decisions?.find((d: any) => d.id === record.quyetDinhId);
+				const qd = activeDecisions.find((d: any) => d.id === record.quyetDinhId);
 				return qd ? <Tag color='blue'>{qd.soQD}</Tag> : '';
 			},
 		},
@@ -94,7 +106,8 @@ const ThongTinVanBang = ({ diplomas, setDiplomas, fields, decisions, ledgers, se
 				<ProFormSelect
 					name='quyetDinhId'
 					label='Quyết định tốt nghiệp'
-					options={decisions?.map((d: any) => ({ label: d.soQD, value: d.id })) || []}
+					request={async () => activeDecisions.map((d: any) => ({ label: d.soQD, value: d.id }))}
+					params={{ activeDecisions }}
 					rules={[{ required: true }]}
 				/>
 				<ProFormText name='soHieuVB' label='Số hiệu văn bằng' rules={[{ required: true }]} />
