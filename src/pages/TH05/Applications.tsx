@@ -1,145 +1,243 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, Modal, Input, Tag, Typography, Card, Tooltip, message } from 'antd';
+import React, { useState, useMemo } from 'react';
+import {
+	Table,
+	Button,
+	Space,
+	Modal,
+	Input,
+	Tag,
+	Typography,
+	Card,
+	message,
+	Popconfirm,
+	Form,
+	Select,
+	Switch,
+	Timeline,
+	Empty,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { CheckCircleOutlined, CloseCircleOutlined, HistoryOutlined, TeamOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import moment from 'moment';
-import { MemberRecord, Status, Log, RegistrationProps } from './utils';
+import { MemberRecord, Status, Log } from './utils';
 
-const { Text, Title } = Typography;
-const { TextArea } = Input;
+const { Title, Text } = Typography;
+const { TextArea, Search } = Input;
 
-const RegistrationManager = ({ clubs = [], data = [], onSync }: RegistrationProps) => {
-	const [selectedIds, setSelectedIds] = useState<React.Key[]>([]);
-	const [rejectModal, setRejectModal] = useState(false);
-	const [reason, setReason] = useState('');
-	const [viewLog, setViewLog] = useState<Log[] | null>(null);
+interface Props {
+	data: MemberRecord[];
+	clubs: { id: string; name: string }[];
+	onChange: (d: MemberRecord[]) => void;
+	role: 'admin' | 'user';
+	setRole: (r: 'admin' | 'user') => void;
+}
 
-	const handleUpdate = (ids: React.Key[], nextStatus: Status, note?: string) => {
-		const newLog: Log = {
+const Applications: React.FC<Props> = ({ data, clubs, onChange, role, setRole }) => {
+	const [keys, setKeys] = useState<React.Key[]>([]);
+	const [rejOpen, setRejOpen] = useState(false);
+	const [crtOpen, setCrtOpen] = useState(false);
+	const [rs, setRs] = useState('');
+	const [logs, setLogs] = useState<Log[] | null>(null);
+	const [kw, setKw] = useState('');
+	const [f] = Form.useForm();
+
+	const list = useMemo(() => data.filter((i) => i.name.toLowerCase().includes(kw.toLowerCase())), [data, kw]);
+
+	const upd = (ids: React.Key[], st: Status, note?: string) => {
+		if (role !== 'admin') return;
+
+		const lg: Log = {
 			admin: 'Admin',
-			action: nextStatus,
-			date: moment().format('HH:mm DD/MM'),
-			note: note || (nextStatus === 'Approved' ? 'Đã duyệt' : ''),
+			action: st,
+			date: moment().format('HH:mm DD/MM/YYYY'),
+			note,
 		};
 
-		const updatedData = data.map((item) => {
-			if (ids.includes(item.id)) {
-				return { ...item, status: nextStatus, history: [newLog, ...item.history] };
-			}
-			return item;
-		});
+		const newData = data.map((i) =>
+			ids.includes(i.id) && i.status === 'Pending' ? { ...i, status: st, history: [lg, ...i.history] } : i,
+		);
 
-		onSync(updatedData);
-		setSelectedIds([]);
-		message.success('Thành công');
+		onChange(newData);
+		setKeys([]);
+		message.success('Cập nhật thành công');
 	};
 
-	const columns: ColumnsType<MemberRecord> = [
+	const del = (id: string) => {
+		if (role !== 'admin') return;
+		onChange(data.filter((i) => i.id !== id));
+	};
+
+	const crt = (v: any) => {
+		if (role !== 'user') return;
+
+		const c = clubs.find((x) => x.id === v.clubId);
+
+		const lg: Log = {
+			admin: 'User',
+			action: 'Pending',
+			date: moment().format('HH:mm DD/MM/YYYY'),
+			note: 'Tạo đơn',
+		};
+
+		const item: MemberRecord = {
+			id: Date.now().toString(),
+			...v,
+			clubName: c?.name || '',
+			status: 'Pending',
+			history: [lg],
+		};
+
+		onChange([item, ...data]);
+		setCrtOpen(false);
+		f.resetFields();
+		message.success('Tạo đơn thành công');
+	};
+
+	const cols: ColumnsType<MemberRecord> = [
 		{
-			title: 'Ứng viên',
-			render: (_, r) => (
-				<Space direction='vertical' size={0}>
-					<Text strong>{r.name}</Text>
-					<Text type='secondary' style={{ fontSize: 12 }}>
-						{r.email}
-					</Text>
-				</Space>
+			title: 'Người đăng ký',
+			dataIndex: 'name',
+			render: (v, r) => (
+				<>
+					<Text strong>{v}</Text>
+					<br />
+					<Text type='secondary'>{r.email}</Text>
+				</>
 			),
 		},
-		{
-			title: 'Câu lạc bộ',
-			dataIndex: 'clubName',
-			filters: clubs.map((c) => ({ text: c.name, value: c.name })),
-			onFilter: (v, r) => r.clubName === v,
-			render: (v) => (
-				<Tag icon={<TeamOutlined />} color='blue'>
-					{v}
-				</Tag>
-			),
-		},
+		{ title: 'SĐT', dataIndex: 'phone' },
+		{ title: 'CLB', dataIndex: 'clubName' },
 		{
 			title: 'Trạng thái',
 			dataIndex: 'status',
-			align: 'center',
 			render: (s: Status) => {
-				const map = { Pending: 'orange', Approved: 'green', Rejected: 'red' };
-				const text = { Pending: 'Chờ', Approved: 'Duyệt', Rejected: 'Từ chối' };
-				return <Tag color={map[s]}>{text[s].toUpperCase()}</Tag>;
+				const c = { Pending: 'orange', Approved: 'green', Rejected: 'red' };
+				return <Tag color={c[s]}>{s}</Tag>;
 			},
 		},
 		{
 			title: 'Lịch sử',
-			align: 'center',
-			render: (_, r) => <Button type='text' icon={<HistoryOutlined />} onClick={() => setViewLog(r.history)} />,
+			render: (_, r) => <Button onClick={() => setLogs(r.history)}>Xem</Button>,
+		},
+		{
+			title: '',
+			render: (_, r) =>
+				role === 'admin' && (
+					<Popconfirm title='Xóa?' onConfirm={() => del(r.id)}>
+						<Button danger size='small' icon={<DeleteOutlined />} />
+					</Popconfirm>
+				),
 		},
 	];
 
 	return (
-		<Card bordered={false} style={{ borderRadius: 12 }}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-				<Title level={4} style={{ margin: 0 }}>
-					Quản lý đơn
-				</Title>
+		<Card bordered={false}>
+			<Space style={{ width: '100%', justifyContent: 'space-between' }}>
+				<Title level={5}>Quản lý đơn</Title>
+
 				<Space>
-					<Button
-						type='primary'
-						icon={<CheckCircleOutlined />}
-						disabled={!selectedIds.length}
-						onClick={() => handleUpdate(selectedIds, 'Approved')}
-					>
-						Duyệt ({selectedIds.length})
+					<span>Chế độ</span>
+					<Switch
+						checkedChildren='ADMIN'
+						unCheckedChildren='USER'
+						checked={role === 'admin'}
+						onChange={(v) => setRole(v ? 'admin' : 'user')}
+					/>
+
+					<Search placeholder='Tìm tên...' allowClear onChange={(e) => setKw(e.target.value)} style={{ width: 200 }} />
+
+					{role === 'user' && (
+						<Button type='primary' icon={<PlusOutlined />} onClick={() => setCrtOpen(true)}>
+							Tạo đơn
+						</Button>
+					)}
+				</Space>
+			</Space>
+
+			{role === 'admin' && (
+				<Space style={{ margin: '16px 0' }}>
+					<Button disabled={!keys.length} type='primary' onClick={() => upd(keys, 'Approved')}>
+						Duyệt
 					</Button>
-					<Button
-						danger
-						icon={<CloseCircleOutlined />}
-						disabled={!selectedIds.length}
-						onClick={() => setRejectModal(true)}
-					>
+
+					<Button danger disabled={!keys.length} onClick={() => setRejOpen(true)}>
 						Từ chối
 					</Button>
 				</Space>
-			</div>
+			)}
 
 			<Table
-				rowSelection={{ selectedRowKeys: selectedIds, onChange: setSelectedIds }}
-				columns={columns}
-				dataSource={data}
 				rowKey='id'
-				pagination={{ pageSize: 8 }}
+				rowSelection={
+					role === 'admin'
+						? {
+								selectedRowKeys: keys,
+								onChange: setKeys,
+						  }
+						: undefined
+				}
+				columns={cols}
+				dataSource={list}
+				pagination={{ pageSize: 5 }}
 			/>
+
+			<Modal title='Tạo đơn' visible={crtOpen} onCancel={() => setCrtOpen(false)} onOk={() => f.submit()}>
+				<Form form={f} onFinish={crt} layout='vertical'>
+					<Form.Item name='name' label='Họ tên' rules={[{ required: true }]}>
+						<Input />
+					</Form.Item>
+
+					<Form.Item name='email' label='Email' rules={[{ required: true }]}>
+						<Input />
+					</Form.Item>
+
+					<Form.Item name='phone' label='SĐT' rules={[{ required: true }]}>
+						<Input />
+					</Form.Item>
+
+					<Form.Item name='clubId' label='CLB' rules={[{ required: true }]}>
+						<Select
+							options={clubs.map((c) => ({
+								label: c.name,
+								value: c.id,
+							}))}
+						/>
+					</Form.Item>
+				</Form>
+			</Modal>
 
 			<Modal
 				title='Lý do từ chối'
-				visible={rejectModal}
-				onCancel={() => setRejectModal(false)}
+				visible={rejOpen}
+				onCancel={() => setRejOpen(false)}
 				onOk={() => {
-					if (!reason) return message.warning('Nhập lý do');
-					handleUpdate(selectedIds, 'Rejected', reason);
-					setRejectModal(false);
-					setReason('');
+					if (!rs) return message.warning('Nhập lý do');
+					upd(keys, 'Rejected', rs);
+					setRs('');
+					setRejOpen(false);
 				}}
 			>
-				<TextArea rows={4} placeholder='Lý do...' value={reason} onChange={(e) => setReason(e.target.value)} />
+				<TextArea value={rs} onChange={(e) => setRs(e.target.value)} />
 			</Modal>
 
-			<Modal title='Lịch sử' visible={!!viewLog} onCancel={() => setViewLog(null)} footer={null}>
-				{viewLog?.map((l, i) => (
-					<div key={i} style={{ padding: 10, background: '#fafafa', marginBottom: 8, borderRadius: 8 }}>
-						<div style={{ display: 'flex', justifyContent: 'space-between' }}>
-							<Text strong>{l.admin}</Text>
-							<Text type='secondary' style={{ fontSize: 11 }}>
-								{l.date}
-							</Text>
-						</div>
-						<Tag color={l.action === 'Approved' ? 'green' : 'red'} style={{ margin: '4px 0' }}>
-							{l.action}
-						</Tag>
-						{l.note && <div style={{ fontSize: 13 }}>{l.note}</div>}
-					</div>
-				))}
+			<Modal title='Lịch sử xử lý' visible={!!logs} onCancel={() => setLogs(null)} footer={null}>
+				{logs && logs.length > 0 ? (
+					<Timeline>
+						{logs.map((l, i) => (
+							<Timeline.Item key={i}>
+								<b>{l.admin}</b> - {l.action}
+								<br />
+								<Text type='secondary'>{l.date}</Text>
+								<div>{l.note}</div>
+							</Timeline.Item>
+						))}
+					</Timeline>
+				) : (
+					<Empty description='Chưa có lịch sử' />
+				)}
 			</Modal>
 		</Card>
 	);
 };
 
-export default RegistrationManager;
+export default Applications;

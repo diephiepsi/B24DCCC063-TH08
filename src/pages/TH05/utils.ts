@@ -28,14 +28,20 @@ export interface MemberRecord {
 	name: string;
 	email: string;
 	phone: string;
+	gender?: string;
+	address?: string;
+	skill?: string;
+	reason?: string;
 	clubId: string;
 	clubName: string;
 	status: Status;
 	history: Log[];
 }
 
-export interface RegistrationProps {
-	clubs: any[];
+interface Props {
 	data: MemberRecord[];
-	onSync: (newData: MemberRecord[]) => void;
+	clubs: { id: string; name: string }[];
+	onChange: (d: MemberRecord[]) => void;
+	role: 'admin' | 'user';
+	setRole: (r: 'admin' | 'user') => void;
 }
