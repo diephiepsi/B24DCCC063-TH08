@@ -1,92 +1,158 @@
-import { Card, Row, Col, Statistic, Progress, Alert, InputNumber, Typography, Space, Divider } from 'antd';
-import { WalletOutlined, RestOutlined, HomeOutlined, CarOutlined } from '@ant-design/icons';
+import { 
+  Card, Row, Col, Statistic, Progress, Alert, 
+  InputNumber, Divider, Typography} from 'antd';
+import { 
+  WalletOutlined, WarningOutlined, CheckCircleOutlined,
+  ArrowUpOutlined, FallOutlined
+} from '@ant-design/icons';
+import { formatCurrency, formatNumber } from '../utils';
 
 const { Title, Text } = Typography;
 
 const BudgetManager = (props: any) => {
   const { itinerary, budgetLimit, setBudgetLimit } = props;
 
-  // Tính toán số liệu
   const totalFood = itinerary?.reduce((sum: number, item: any) => sum + (item.foodCost || 0), 0) || 0;
   const totalStay = itinerary?.reduce((sum: number, item: any) => sum + (item.stayCost || 0), 0) || 0;
   const totalMove = itinerary?.reduce((sum: number, item: any) => sum + (item.moveCost || 0), 0) || 0;
   
-  const totalSpent = totalFood + totalStay + totalMove;
+  const totalSpent = totalFood + totalStay + totalMove; 
+  const isOverBudget = totalSpent > budgetLimit; 
+  const diffAmount = Math.abs(totalSpent - budgetLimit);
+
   const percentUsed = budgetLimit > 0 ? Math.round((totalSpent / budgetLimit) * 100) : 0;
 
   return (
-    <Card bordered={false}>
-      <Title level={4}><WalletOutlined /> Quản lý Ngân sách</Title>
+    <Card bordered={false} style={{ background: 'transparent' }}>
+      <Title level={4}><WalletOutlined /> Quản lý ngân sách chuyến đi</Title>
       
-      <Row gutter={[32, 32]} style={{ marginTop: 24 }}>
-        <Col xs={24} md={10}>
-          <div style={{ padding: 20, background: '#fafafa', borderRadius: 8 }}>
-            <Text strong>Thiết lập Ngân sách tối đa (VNĐ):</Text>
+      <Row gutter={[24, 24]} style={{ marginTop: 20 }}>
+        
+        <Col xs={24} md={12}>
+          <div style={{ padding: 20, background: '#fafafa', borderRadius: 8, marginBottom: 20 }}>
+            <Text strong>1. Thiết lập Ngân sách tối đa (VNĐ):</Text>
             <InputNumber 
-              style={{ width: '100%', marginTop: 8 }} size="large" min={0} step={500000}
-              value={budgetLimit} onChange={(v) => setBudgetLimit(v || 0)} 
-              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              style={{ width: '100%', marginTop: 8, fontSize: 18, color: '#1890ff' }}
+              min={0}
+              step={500000}
+              value={budgetLimit}
+              onChange={(v) => setBudgetLimit(v || 0)}
+              formatter={(value) => formatNumber(value)}
+              parser={(value) => value?.replace(/\$\s?|(,*)/g, '') || ''}
             />
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              * Đây là số tiền tối đa bạn dự kiến chi trả cho cả chuyến đi.
+            </Text>
           </div>
 
-          <div style={{ textAlign: 'center', margin: '30px 0' }}>
-            {/* Biểu đồ phần trăm ngân sách */}
-            <Progress 
-              type="dashboard" 
-              percent={percentUsed > 100 ? 100 : percentUsed} 
-              status={percentUsed > 100 ? 'exception' : 'normal'}
-              strokeColor={percentUsed > 100 ? '#ff4d4f' : percentUsed >= 80 ? '#faad14' : '#52c41a'}
-              format={() => (
+          {isOverBudget ? (
+            <Alert
+              message={<Text strong style={{ color: '#cf1322' }}>CẢNH BÁO: VƯỢT NGÂN SÁCH!</Text>}
+              description={
                 <div>
-                  <div style={{ fontSize: 14, color: '#8c8c8c' }}>Đã dùng</div>
-                  <div style={{ fontSize: 24, fontWeight: 'bold', color: '#333' }}>{percentUsed}%</div>
+                  Bạn đã chi tiêu vượt quá kế hoạch: <Text strong style={{ color: '#cf1322' }}>{formatCurrency(diffAmount)}</Text>.
+                  <br />
+                  <Text italic>Lời khuyên: Hãy xóa bớt địa điểm hoặc tăng hạn mức ngân sách.</Text>
+                </div>
+              }
+              type="error"
+              showIcon
+              icon={<WarningOutlined />}
+            />
+          ) : (
+            <Alert
+              message="Ngân sách hợp lý"
+              description={`Bạn vẫn còn dư ${formatCurrency(budgetLimit - totalSpent)} để chi tiêu thêm.`}
+              type="success"
+              showIcon
+              icon={<CheckCircleOutlined />}
+            />
+          )}
+        </Col>
+
+        <Col xs={24} md={12} style={{ textAlign: 'center' }}>
+          <Text strong>Mức độ sử dụng ngân sách</Text>
+          <div style={{ marginTop: 20 }}>
+            <Progress
+              type="circle"
+              percent={percentUsed}
+              strokeColor={isOverBudget ? '#ff4d4f' : '#52c41a'}
+              status={isOverBudget ? 'exception' : 'normal'}
+              width={180}
+              format={(percent) => (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: 26, fontWeight: 'bold' }}>{percent}%</span>
+                  <span style={{ fontSize: 12, color: '#8c8c8c' }}>{isOverBudget ? 'Quá tải' : 'An toàn'}</span>
                 </div>
               )}
             />
           </div>
-
-          {percentUsed > 100 ? (
-            <Alert message="VƯỢT NGÂN SÁCH!" description={`Bạn đã chi tiêu lố ${(totalSpent - budgetLimit).toLocaleString()} VNĐ.`} type="error" showIcon />
-          ) : percentUsed >= 80 ? (
-            <Alert message="CẢNH BÁO!" description="Ngân sách sắp cạn kiệt, hãy chi tiêu hợp lý." type="warning" showIcon />
-          ) : (
-            <Alert message="Ngân sách an toàn" description="Bạn vẫn đang kiểm soát tốt chi phí." type="success" showIcon />
-          )}
-        </Col>
-
-        <Col xs={24} md={14}>
-          <Row gutter={[16, 16]}>
-            <Col span={12}><Card size="small"><Statistic title="Tổng chi phí thực tế" value={totalSpent} suffix="đ" valueStyle={{ color: percentUsed > 100 ? '#cf1322' : '#3f8600' }} /></Card></Col>
-            <Col span={12}><Card size="small"><Statistic title="Ngân sách còn lại" value={budgetLimit - totalSpent > 0 ? budgetLimit - totalSpent : 0} suffix="đ" valueStyle={{ color: '#1890ff' }} /></Card></Col>
-          </Row>
-
-          <Divider orientation="left">Biểu đồ Phân bổ Hạng mục (Charts)</Divider>
-          
-          <Space direction="vertical" style={{ width: '100%' }} size="large">
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Text strong><RestOutlined style={{ color: '#ff4d4f' }} /> Ăn uống</Text>
-                <Text>{totalFood.toLocaleString()} đ</Text>
-              </div>
-              <Progress percent={totalSpent > 0 ? Math.round((totalFood/totalSpent)*100) : 0} strokeColor="#ff4d4f" />
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Text strong><HomeOutlined style={{ color: '#1890ff' }} /> Lưu trú</Text>
-                <Text>{totalStay.toLocaleString()} đ</Text>
-              </div>
-              <Progress percent={totalSpent > 0 ? Math.round((totalStay/totalSpent)*100) : 0} strokeColor="#1890ff" />
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Text strong><CarOutlined style={{ color: '#52c41a' }} /> Di chuyển</Text>
-                <Text>{totalMove.toLocaleString()} đ</Text>
-              </div>
-              <Progress percent={totalSpent > 0 ? Math.round((totalMove/totalSpent)*100) : 0} strokeColor="#52c41a" />
-            </div>
-          </Space>
         </Col>
       </Row>
+
+      <Divider orientation="left">Số liệu chi tiết (Yêu cầu: Data Statistics)</Divider>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={8}>
+          <Card size="small" style={{ background: '#e6f7ff' }}>
+            <Statistic 
+              title="Tổng chi thực tế" 
+              value={totalSpent} 
+              formatter={(v) => formatCurrency(Number(v))}
+              prefix={<ArrowUpOutlined />}
+              valueStyle={{ color: isOverBudget ? '#cf1322' : '#3f8600' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card size="small">
+            <Statistic 
+              title="Số tiền còn lại" 
+              value={!isOverBudget ? budgetLimit - totalSpent : 0} 
+              formatter={(v) => formatCurrency(Number(v))}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card size="small" style={{ background: isOverBudget ? '#fff1f0' : '#f6ffed' }}>
+            <Statistic 
+              title={isOverBudget ? "Vượt ngưỡng" : "Tiết kiệm được"} 
+              value={diffAmount} 
+              formatter={(v) => formatCurrency(Number(v))}
+              prefix={isOverBudget ? <WarningOutlined /> : <FallOutlined />}
+              valueStyle={{ color: isOverBudget ? '#cf1322' : '#52c41a' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <div style={{ marginTop: 24 }}>
+        <Text strong>Phân tích chi tiết theo hạng mục:</Text>
+        <Row gutter={[24, 16]} style={{ marginTop: 12 }}>
+          <Col span={8}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text type="secondary">Ăn uống</Text>
+              <Text strong>{formatCurrency(totalFood)}</Text>
+            </div>
+            <Progress percent={totalSpent > 0 ? Math.round((totalFood/totalSpent)*100) : 0} size="small" strokeColor="#ff4d4f" />
+          </Col>
+          <Col span={8}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text type="secondary">Lưu trú</Text>
+              <Text strong>{formatCurrency(totalStay)}</Text>
+            </div>
+            <Progress percent={totalSpent > 0 ? Math.round((totalStay/totalSpent)*100) : 0} size="small" strokeColor="#1890ff" />
+          </Col>
+          <Col span={8}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text type="secondary">Di chuyển</Text>
+              <Text strong>{formatCurrency(totalMove)}</Text>
+            </div>
+            <Progress percent={totalSpent > 0 ? Math.round((totalMove/totalSpent)*100) : 0} size="small" strokeColor="#52c41a" />
+          </Col>
+        </Row>
+      </div>
     </Card>
   );
 };

@@ -79,7 +79,7 @@ const Members = (props: any) => {
         >
           <Alert 
             message={`Bạn đang thực hiện đổi CLB cho ${selectedRowKeys.length} thành viên đã chọn.`}
-            type="info"
+type="info"
             showIcon
             style={{ marginBottom: 20 }}
           />

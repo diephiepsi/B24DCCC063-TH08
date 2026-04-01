@@ -37,19 +37,6 @@
 		icon: 'ArrowsAltOutlined',
 	},
 
-	// DANH MUC HE THONG
-	// {
-	// 	name: 'DanhMuc',
-	// 	path: '/danh-muc',
-	// 	icon: 'copy',
-	// 	routes: [
-	// 		{
-	// 			name: 'ChucVu',
-	// 			path: 'chuc-vu',
-	// 			component: './DanhMuc/ChucVu',
-	// 		},
-	// 	],
-	// },
 
 	{
 		path: '/notification',
@@ -119,6 +106,7 @@
 		component: './TH03/index',
 	},
 	{
+
 		path: '/thuc-hanh-04',
 		name: 'Bài thực hành 04',
 		icon: 'FileProtectOutlined',
@@ -140,7 +128,8 @@
 	{
 		path: '/thuc-hanh-06',
 		name: 'Bài thực hành 06',
-		icon: 'global',
+		icon: 'TeamOutlined',
 		component: './TH06/index',
 	},
+	
 ];
