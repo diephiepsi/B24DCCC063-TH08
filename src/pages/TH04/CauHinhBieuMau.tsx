@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import ProTable from '@ant-design/pro-table';
 import { Button, message, Popconfirm, Space } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';

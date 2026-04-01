@@ -119,5 +119,10 @@
 			},
 		],
 	},
-
+	{
+		path: '/thuc-hanh-05',
+		name: 'Bài thực hành 05',
+		icon: 'TeamOutlined',
+		component: './TH05/index',
+	},
 ];
