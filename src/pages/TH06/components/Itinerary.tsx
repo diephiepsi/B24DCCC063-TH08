@@ -1,5 +1,6 @@
-dimport { Table, Button, Space, Typography, Popconfirm, Card, Tag, Alert } from 'antd';
+import { Table, Button, Space, Typography, Card, Tag, Alert } from 'antd';
 import { DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import Popconfirm from 'antd/es/popconfirm';
 
 const { Title, Text } = Typography;
 
