@@ -1,0 +1,40 @@
+.profileCard {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+  max-width: 800px;
+  display: flex; /* Mặc định dùng Flexbox */
+  transition: all 0.3s ease;
+
+  .imageSection {
+    flex: 1;
+    img {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+    }
+  }
+
+  .infoSection {
+    flex: 1.5;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    h2 { margin-bottom: 12px; color: #1890ff; }
+    p { color: #666; line-height: 1.6; }
+  }
+
+  /* REQ 2: Khi màn hình nhỏ hơn hoặc bằng 768px */
+  @media (max-width: 768px) {
+    flex-direction: column; /* Chuyển từ hàng sang cột (Card dọc) */
+    max-width: 400px;
+
+    .imageSection img {
+      height: 200px; /* Giảm chiều cao ảnh trên mobile */
+    }
+  }
+}
