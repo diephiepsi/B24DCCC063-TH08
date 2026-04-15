@@ -1,120 +1,135 @@
+import React from 'react';
 import { Card, Form, Input, Button, Typography, message, Divider } from 'antd';
-import { UserOutlined, LockOutlined, LoginOutlined, SecurityScanOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, LoginOutlined, RocketOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-const Login = ({ allUsers, setAllUsers, setCurrentUser }: any) => {
-  const onFinish = (values: any) => {
-    const { username, password } = values;
-    // Tìm kiếm xem user đã tồn tại trong hệ thống (allUsers) chưa
-    const user = allUsers.find((u: any) => u.username === username);
+interface LoginProps {
+	allUsers: any[];
+	setAllUsers: (users: any[]) => void;
+	setCurrentUser: (username: string) => void;
+}
 
-    if (user) {
-      // Nếu user đã tồn tại -> Kiểm tra mật khẩu
-      if (user.password === password) {
-        setCurrentUser(username);
-        message.success(`Chào mừng ${username} trở lại!`);
-      } else {
-        message.error('Mật khẩu không chính xác. Vui lòng thử lại!');
-      }
-    } else {
-      // Nếu user chưa tồn tại -> Tự động "đăng ký" và đăng nhập
-      setAllUsers([...allUsers, { username, password }]);
-      setCurrentUser(username);
-      message.success('Tài khoản mới đã được tạo và đăng nhập thành công!');
-    }
-  };
+const Login: React.FC<LoginProps> = ({ allUsers, setAllUsers, setCurrentUser }) => {
+	const onFinish = (values: any) => {
+		const { username, password } = values;
+		const user = allUsers.find((u: any) => u.username === username);
 
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        // Nền Gradient xanh dương - tím hiện đại, nhẹ nhàng
-        background: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)',
-        padding: 20,
-      }}
-    >
-      <Card
-        style={{
-          width: 400,
-          borderRadius: 16,
-          // Hiệu ứng Glassmorphism: đổ bóng mờ và bo góc mạnh
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-          background: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(4px)',
-          border: '1px solid rgba(255, 255, 255, 0.18)',
-        }}
-        bordered={false}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 30 }}>
-          {/* Icon bảo mật lớn phía trên tiêu đề */}
-          <SecurityScanOutlined style={{ fontSize: 50, color: '#1890ff', marginBottom: 15 }} />
-          <Title level={2} style={{ margin: 0, color: '#262626' }}>
-            QUẢN LÝ CÔNG VIỆC
-          </Title>
-          <Text type="secondary">TH07 - Đăng nhập hệ thống</Text>
-        </div>
+		if (user) {
+			if (user.password === password) {
+				setCurrentUser(username);
+				message.success(`Chào mừng ${username} quay trở lại!`);
+			} else {
+				message.error('Mật khẩu không chính xác!');
+			}
+		} else {
+			const newUser = { username, password };
+			const updatedUsers = [...allUsers, newUser];
+			setAllUsers(updatedUsers);
+			localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+			setCurrentUser(username);
+			message.success('Tài khoản mới đã được tạo và đăng nhập thành công!');
+		}
+	};
 
-        <Form
-          name="login_form"
-          className="login-form"
-          initialValues={{ remember: true }}
-          onFinish={onFinish}
-          layout="vertical"
-          size="large" // Làm cho các ô input và nút bấm lớn hơn, dễ thao tác
-        >
-          <Form.Item
-            name="username"
-            rules={[{ required: true, message: 'Vui lòng nhập tên người dùng!' }]}
-          >
-            <Input
-              prefix={<UserOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-              placeholder="Tên đăng nhập (Username)"
-              style={{ borderRadius: 8 }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-              placeholder="Mật khẩu (Password)"
-              style={{ borderRadius: 8 }}
-            />
-          </Form.Item>
+	return (
+		<div
+			style={{
+				display: 'flex',
+				justifyContent: 'center',
+				alignItems: 'center',
+				minHeight: '100vh',
+				background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+				padding: '20px',
+			}}
+		>
+			<Card
+				bordered={false}
+				style={{
+					width: '100%',
+					maxWidth: 400,
+					borderRadius: 24,
+					boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+					background: 'rgba(255, 255, 255, 0.85)',
+					backdropFilter: 'blur(10px)',
+					border: '1px solid rgba(255, 255, 255, 0.2)',
+				}}
+			>
+				<div style={{ textAlign: 'center', marginBottom: 40 }}>
+					<div
+						style={{
+							width: 80,
+							height: 80,
+							background: 'linear-gradient(135deg, #1890ff 0%, #722ed1 100%)',
+							borderRadius: '22px',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							margin: '0 auto 20px',
+							boxShadow: '0 8px 16px rgba(114, 46, 209, 0.3)',
+							transform: 'rotate(-10deg)',
+						}}
+					>
+						<RocketOutlined style={{ fontSize: 40, color: '#fff', transform: 'rotate(10deg)' }} />
+					</div>
+					<Title level={2} style={{ margin: 0, fontWeight: 800, color: '#1a1a1a' }}>
+						TASK LOG
+					</Title>
+					<Text type='secondary' style={{ fontSize: 16 }}>
+						Quản lý công việc hiệu quả hơn
+					</Text>
+				</div>
 
-          <Form.Item style={{ marginBottom: 10 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="login-form-button"
-              block
-              icon={<LoginOutlined />}
-              style={{
-                borderRadius: 8,
-                height: 45,
-                fontSize: 16,
-                fontWeight: 'bold',
-                // Hiệu ứng shadow cho nút bấm
-                boxShadow: '0 4px 14px 0 rgba(24, 144, 255, 0.3)',
-              }}
-            >
-              ĐĂNG NHẬP / ĐĂNG KÝ
-            </Button>
-          </Form.Item>
-        </Form>
+				<Form name='login_modern' layout='vertical' onFinish={onFinish} size='large' autoComplete='off'>
+					<Form.Item name='username' rules={[{ required: true, message: 'Vui lòng nhập Username!' }]}>
+						<Input
+							prefix={<UserOutlined style={{ color: '#8c8c8c' }} />}
+							placeholder='Tên đăng nhập'
+							style={{ borderRadius: 12, height: 50 }}
+						/>
+					</Form.Item>
 
-        <Divider style={{ margin: '20px 0' }} />
+					<Form.Item name='password' rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}>
+						<Input.Password
+							prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}
+							placeholder='Mật khẩu'
+							style={{ borderRadius: 12, height: 50 }}
+						/>
+					</Form.Item>
 
-        
-      </Card>
-    </div>
-  );
+					<Form.Item style={{ marginTop: 24 }}>
+						<Button
+							type='primary'
+							htmlType='submit'
+							block
+							icon={<LoginOutlined />}
+							style={{
+								height: 55,
+								borderRadius: 14,
+								fontSize: 17,
+								fontWeight: 700,
+								background: 'linear-gradient(90deg, #1890ff 0%, #722ed1 100%)',
+								border: 'none',
+								boxShadow: '0 6px 20px rgba(114, 46, 209, 0.4)',
+							}}
+						>
+							ĐĂNG NHẬP NGAY
+						</Button>
+					</Form.Item>
+				</Form>
+
+				<Divider plain>
+					<Text type='secondary' style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
+						Secure Access
+					</Text>
+				</Divider>
+
+				<div style={{ textAlign: 'center' }}>
+					<Text type='secondary'>Hệ thống tự động đăng ký cho người dùng mới</Text>
+				</div>
+			</Card>
+		</div>
+	);
 };
-
 
 export default Login;
