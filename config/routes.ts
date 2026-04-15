@@ -138,20 +138,18 @@ export default [
 		icon: 'TeamOutlined',
 		component: './TH07/index',
 	},
-
-	{
-		path: '/profile',
-		name: 'ProfileCard',
-		icon: 'UserOutlined',
-		component: './TH/ProfileCard',
-	},
-	{
-		path: '/ProfileResponsive(diep)',
-		name: 'Responsive',
-		icon: 'TeamOutlined',
-		component: './ProfileResponsive/index',
-	},
-
-
 	
+	// {
+	// 	path: '/profile',
+	// 	name: 'ProfileCard',
+	// 	icon: 'UserOutlined',
+	// 	component: './TH/ProfileCard',
+	// },
+	// {
+	// 	path: '/ProfileResponsive(diep)',
+	// 	name: 'Responsive',
+	// 	icon: 'TeamOutlined',
+	// 	component: './ProfileResponsive/index',
+	// },
+
 ];
